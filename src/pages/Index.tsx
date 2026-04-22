@@ -156,6 +156,8 @@ export default function Index() {
   const [isOffline, setIsOffline] = useState(!navigator.onLine);
   const [heartAnimId, setHeartAnimId] = useState<string | null>(null);
   const [charCount, setCharCount] = useState(0);
+  const [installPrompt, setInstallPrompt] = useState<Event | null>(null);
+  const [isInstalled, setIsInstalled] = useState(false);
 
   const recognitionRef = useRef<{ stop: () => void } | null>(null);
 
@@ -168,6 +170,22 @@ export default function Index() {
       window.removeEventListener("online", onOnline);
       window.removeEventListener("offline", onOffline);
     };
+  }, []);
+
+  useEffect(() => {
+    const handler = (e: Event) => {
+      e.preventDefault();
+      setInstallPrompt(e);
+    };
+    window.addEventListener("beforeinstallprompt", handler);
+    window.addEventListener("appinstalled", () => {
+      setIsInstalled(true);
+      setInstallPrompt(null);
+    });
+    if (window.matchMedia("(display-mode: standalone)").matches) {
+      setIsInstalled(true);
+    }
+    return () => window.removeEventListener("beforeinstallprompt", handler);
   }, []);
 
   useEffect(() => {
@@ -308,8 +326,22 @@ export default function Index() {
                 <h1 className="text-xl font-bold gradient-text font-golos">LinguaAI</h1>
                 <p className="text-xs text-white/40 font-rubik">Умный переводчик</p>
               </div>
-              <div className="glass rounded-2xl p-2.5">
-                <Icon name="Globe" size={20} className="text-neon-purple" />
+              <div className="flex items-center gap-2">
+                {installPrompt && !isInstalled && (
+                  <button
+                    onClick={() => {
+                      const prompt = installPrompt as { prompt: () => void };
+                      prompt.prompt();
+                    }}
+                    className="btn-translate text-white text-xs font-bold px-3 py-2 rounded-xl flex items-center gap-1.5 animate-fade-in"
+                  >
+                    <Icon name="Download" size={14} />
+                    Установить
+                  </button>
+                )}
+                <div className="glass rounded-2xl p-2.5">
+                  <Icon name="Globe" size={20} className="text-neon-purple" />
+                </div>
               </div>
             </div>
           </div>
