@@ -1,0 +1,39 @@
+{
+  "tests": [
+    {
+      "name": "Translate ru to en",
+      "method": "POST",
+      "path": "/",
+      "body": {
+        "text": "привет",
+        "source": "ru",
+        "target": "en"
+      },
+      "expectedStatus": 200,
+      "expectedBody": {
+        "source": "ru",
+        "target": "en"
+      },
+      "bodyMatcher": "partial"
+    },
+    {
+      "name": "OPTIONS preflight",
+      "method": "OPTIONS",
+      "path": "/",
+      "expectedStatus": 200,
+      "bodyMatcher": "partial"
+    },
+    {
+      "name": "Empty text error",
+      "method": "POST",
+      "path": "/",
+      "body": {
+        "text": "",
+        "source": "ru",
+        "target": "en"
+      },
+      "expectedStatus": 400,
+      "bodyMatcher": "partial"
+    }
+  ]
+}

@@ -87,22 +87,29 @@ const DEMO_TRANSLATIONS: Record<string, Record<string, Record<string, string>>> 
   },
 };
 
+const TRANSLATE_URL = "https://functions.poehali.dev/103a1735-0feb-4927-b1a1-4570af68e07b";
+
 function getOfflineTranslation(text: string, from: string, to: string): string | null {
   const t = text.toLowerCase().trim();
   return DEMO_TRANSLATIONS[from]?.[to]?.[t] ?? null;
 }
 
-function mockTranslate(text: string, from: string, to: string): Promise<string> {
-  return new Promise((resolve) => {
-    setTimeout(() => {
-      const offline = getOfflineTranslation(text, from, to);
-      if (offline) {
-        resolve(offline);
-      } else {
-        resolve(`[${to.toUpperCase()}] ${text}`);
-      }
-    }, 600 + Math.random() * 400);
-  });
+async function translateText(text: string, from: string, to: string): Promise<string> {
+  const offline = getOfflineTranslation(text, from, to);
+  if (offline) return offline;
+
+  try {
+    const res = await fetch(TRANSLATE_URL, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ text, source: from, target: to }),
+    });
+    const data = await res.json();
+    if (!res.ok) throw new Error(data.error || "Translation failed");
+    return data.translatedText as string;
+  } catch {
+    return `[Ошибка перевода] ${text}`;
+  }
 }
 
 function getLangLabel(code: string) {
@@ -172,7 +179,7 @@ export default function Index() {
     setIsLoading(true);
     setTranslatedText("");
     try {
-      const result = await mockTranslate(sourceText, sourceLang, targetLang);
+      const result = await translateText(sourceText, sourceLang, targetLang);
       setTranslatedText(result);
       const entry: TranslationEntry = {
         id: Date.now().toString(),
